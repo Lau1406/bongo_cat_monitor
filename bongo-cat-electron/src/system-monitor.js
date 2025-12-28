@@ -99,7 +99,7 @@ class SystemMonitor {
 
             // Get memory usage
             const memoryInfo = await si.mem();
-            const memoryUsage = ((memoryInfo.used / memoryInfo.total) * 100) || 0;
+            const memoryUsage = await this.getMemoryUsage();
 
             // Smooth CPU readings to reduce fluctuation
             this.cpuLoadArray.push(cpuUsage);
@@ -126,6 +126,21 @@ class SystemMonitor {
             
             // Return cached stats on error
             return this.lastStats;
+        }
+    }
+
+    /**
+     * Get memory usage percentage based on OS
+     */
+    async getMemoryUsage() {
+        const memoryInfo = await si.mem();
+        if (process.platform === 'linux') {
+            // Linux: Used = Total - Available
+            const used = memoryInfo.total - memoryInfo.available;
+            return (used / memoryInfo.total) * 100 || 0;
+        } else {
+            // Other OSes: Use default (Used = Total - Free)
+            return (memoryInfo.used / memoryInfo.total) * 100 || 0;
         }
     }
 
